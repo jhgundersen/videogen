@@ -7,7 +7,9 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 )
@@ -151,6 +153,16 @@ func download(videoURL, taskID string) string {
 	return dest
 }
 
+func openFile(path string) {
+	cmd := "xdg-open"
+	if runtime.GOOS == "darwin" {
+		cmd = "open"
+	}
+	if err := exec.Command(cmd, path).Start(); err != nil {
+		fmt.Fprintf(os.Stderr, "warning: could not open file: %v\n", err)
+	}
+}
+
 // --- model subcommands ---
 
 func cmdSeedance(args []string) {
@@ -158,6 +170,7 @@ func cmdSeedance(args []string) {
 	duration := fs.Int("duration", 5, "Duration in seconds: 5, 10, 15")
 	ratio := fs.String("ratio", "16:9", "Aspect ratio: 16:9 9:16 1:1 4:3 3:4 21:9")
 	image := fs.String("image", "", "Reference image URL for image-to-video (up to 9 supported)")
+	open := fs.Bool("open", false, "Open the video after download")
 	fs.Usage = func() {
 		fmt.Println("Usage: videogen seedance [flags] <prompt>")
 		fs.PrintDefaults()
@@ -197,6 +210,9 @@ func cmdSeedance(args []string) {
 	videoURL := poll(taskID, key)
 	dest := download(videoURL, taskID)
 	fmt.Printf("\nSaved to: \033]8;;file://%s\033\\%s\033]8;;\033\\\n", dest, dest)
+	if *open {
+		openFile(dest)
+	}
 }
 
 func cmdGrok(args []string) {
@@ -204,6 +220,7 @@ func cmdGrok(args []string) {
 	duration := fs.Int("duration", 10, "Duration in seconds: 10, 15")
 	ratio := fs.String("ratio", "16:9", "Aspect ratio: 16:9 9:16 1:1 2:3 3:2")
 	image := fs.String("image", "", "Reference image URL for image-to-video")
+	open := fs.Bool("open", false, "Open the video after download")
 	fs.Usage = func() {
 		fmt.Println("Usage: videogen grok [flags] <prompt>")
 		fs.PrintDefaults()
@@ -240,6 +257,9 @@ func cmdGrok(args []string) {
 	videoURL := poll(taskID, key)
 	dest := download(videoURL, taskID)
 	fmt.Printf("\nSaved to: \033]8;;file://%s\033\\%s\033]8;;\033\\\n", dest, dest)
+	if *open {
+		openFile(dest)
+	}
 }
 
 func cmdSora(args []string) {
@@ -248,6 +268,7 @@ func cmdSora(args []string) {
 	ratio := fs.String("ratio", "16:9", "Aspect ratio: 16:9 9:16")
 	variant := fs.String("variant", "sora-2", "Model variant: sora-2, sora-2-hd, sora-2-pro")
 	image := fs.String("image", "", "Reference image URL for image-to-video")
+	open := fs.Bool("open", false, "Open the video after download")
 	fs.Usage = func() {
 		fmt.Println("Usage: videogen sora [flags] <prompt>")
 		fs.PrintDefaults()
@@ -288,6 +309,9 @@ func cmdSora(args []string) {
 	videoURL := poll(taskID, key)
 	dest := download(videoURL, taskID)
 	fmt.Printf("\nSaved to: \033]8;;file://%s\033\\%s\033]8;;\033\\\n", dest, dest)
+	if *open {
+		openFile(dest)
+	}
 }
 
 func usage() {
