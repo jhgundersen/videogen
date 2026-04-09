@@ -156,6 +156,7 @@ func cmdSeedance(args []string) {
 	fs := flag.NewFlagSet("seedance", flag.ExitOnError)
 	duration := fs.Int("duration", 5, "Duration in seconds: 5, 10, 15")
 	ratio := fs.String("ratio", "16:9", "Aspect ratio: 16:9 9:16 1:1 4:3 3:4 21:9")
+	image := fs.String("image", "", "Reference image URL for image-to-video (up to 9 supported)")
 	fs.Usage = func() {
 		fmt.Println("Usage: videogen seedance [flags] <prompt>")
 		fs.PrintDefaults()
@@ -176,9 +177,17 @@ func cmdSeedance(args []string) {
 	key := apiKey()
 	fmt.Printf("Model: seedance | Duration: %ds | Ratio: %s\nPrompt: %s\n\n", *duration, *ratio, prompt)
 
+	content := []map[string]any{{"type": "text", "text": prompt}}
+	if *image != "" {
+		content = append(content, map[string]any{
+			"type":      "image_url",
+			"image_url": map[string]any{"url": *image},
+		})
+	}
+
 	data := post("/api/video/seedance/gen", map[string]any{
 		"model":    "seedance-2.0",
-		"content":  []map[string]any{{"type": "text", "text": prompt}},
+		"content":  content,
 		"duration": *duration,
 		"ratio":    *ratio,
 	}, key)
@@ -193,6 +202,7 @@ func cmdGrok(args []string) {
 	fs := flag.NewFlagSet("grok", flag.ExitOnError)
 	duration := fs.Int("duration", 10, "Duration in seconds: 10, 15")
 	ratio := fs.String("ratio", "16:9", "Aspect ratio: 16:9 9:16 1:1 2:3 3:2")
+	image := fs.String("image", "", "Reference image URL for image-to-video")
 	fs.Usage = func() {
 		fmt.Println("Usage: videogen grok [flags] <prompt>")
 		fs.PrintDefaults()
@@ -213,12 +223,17 @@ func cmdGrok(args []string) {
 	key := apiKey()
 	fmt.Printf("Model: grok | Duration: %ds | Ratio: %s\nPrompt: %s\n\n", *duration, *ratio, prompt)
 
-	data := post("/api/grok-imagine-video/gen", map[string]any{
+	body := map[string]any{
 		"prompt":       prompt,
 		"model":        "grok-imagine-video",
 		"duration":     fmt.Sprintf("%d", *duration),
 		"aspect_ratio": *ratio,
-	}, key)
+	}
+	if *image != "" {
+		body["images"] = []string{*image}
+	}
+
+	data := post("/api/grok-imagine-video/gen", body, key)
 
 	taskID := extractTaskID(data)
 	videoURL := poll(taskID, key)
@@ -231,6 +246,7 @@ func cmdSora(args []string) {
 	duration := fs.Int("duration", 10, "Duration in seconds: 10, 15, 25 (25 requires --variant sora-2-pro)")
 	ratio := fs.String("ratio", "16:9", "Aspect ratio: 16:9 9:16")
 	variant := fs.String("variant", "sora-2", "Model variant: sora-2, sora-2-hd, sora-2-pro")
+	image := fs.String("image", "", "Reference image URL for image-to-video")
 	fs.Usage = func() {
 		fmt.Println("Usage: videogen sora [flags] <prompt>")
 		fs.PrintDefaults()
@@ -255,12 +271,17 @@ func cmdSora(args []string) {
 	key := apiKey()
 	fmt.Printf("Model: sora (%s) | Duration: %ds | Ratio: %s\nPrompt: %s\n\n", *variant, *duration, *ratio, prompt)
 
-	data := post("/api/sora2/gen", map[string]any{
+	body := map[string]any{
 		"prompt":       prompt,
 		"model":        *variant,
 		"duration":     fmt.Sprintf("%d", *duration),
 		"aspect_ratio": *ratio,
-	}, key)
+	}
+	if *image != "" {
+		body["images"] = []string{*image}
+	}
+
+	data := post("/api/sora2/gen", body, key)
 
 	taskID := extractTaskID(data)
 	videoURL := poll(taskID, key)
