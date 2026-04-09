@@ -4,6 +4,23 @@ CLI tool for AI video generation via [defapi.org](https://defapi.org).
 
 ## Installation
 
+**Pre-built binary** (Linux/macOS):
+
+```sh
+# Detect OS and arch, download latest release
+OS=$(uname -s | tr '[:upper:]' '[:lower:]') ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/') && \
+curl -fsSL "https://github.com/jhgundersen/videogen/releases/latest/download/videogen-${OS}-${ARCH}" \
+  -o ~/.local/bin/videogen && chmod +x ~/.local/bin/videogen
+```
+
+**Using Go:**
+
+```sh
+go install github.com/jhgundersen/videogen@latest
+```
+
+**From source:**
+
 ```sh
 make install
 ```
